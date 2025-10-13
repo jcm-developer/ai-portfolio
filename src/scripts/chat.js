@@ -154,7 +154,7 @@ const handleFormSubmit = (e) => {
     // Simulate loading then send request
     setTimeout(() => {
         const botMsgHTML = `
-      <img src="/avatar.png" alt="bot" class="avatar">
+      <img src="/my-portfolio/img/avatar.png" alt="bot" class="avatar">
       <p class="message-text">Processing...</p>
     `;
         const botMsgDiv = createMsgElement(botMsgHTML, "bot-message", "loading");
