@@ -62,7 +62,7 @@
     </div>
 </main>
 
-<script type="module" is:inline>
+<script>
     // @ts-nocheck
     import { Client } from "@gradio/client";
     import {
@@ -70,7 +70,7 @@
         initLanguageSwitcher,
     } from "../scripts/i18n.js";
 
-     console.log("🧠 Env var:", import.meta.env.PUBLIC_SYSTEM_MESSAGE);
+    console.log("🧠 Env var:", import.meta.env.PUBLIC_SYSTEM_MESSAGE);
 
     let container, chatsContainer, promptForm, promptInput;
     let typingInterval, controller;
