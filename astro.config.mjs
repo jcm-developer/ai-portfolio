@@ -3,7 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   site: "https://jcm-developer.github.io",
-  base: "/my-portfolio",
+  base: "/ai-portfolio",
   trailingSlash: "always",
   i18n: {
     defaultLocale: "en",
