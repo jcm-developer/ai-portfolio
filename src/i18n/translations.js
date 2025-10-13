@@ -1,7 +1,7 @@
 export const translations = {
     en: {
         header: {
-            subtitle: "Hey, I'm Jaume 👋",
+            subtitle: "Hey, I'm Jaume ",
             title: "AI Portfolio"
         },
         suggestions: [
@@ -19,7 +19,7 @@ export const translations = {
     },
     es: {
         header: {
-            subtitle: "Hola, soy Jaume 👋",
+            subtitle: "Hola, soy Jaume ",
             title: "Portfolio IA"
         },
         suggestions: [
