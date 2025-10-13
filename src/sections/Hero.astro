@@ -132,16 +132,12 @@
             parts: [{ text: userData.message }],
         });
 
-        console.log("HF_TOKEN: ", import.meta.env.PUBLIC_HF_TOKEN);
         console.log("SYSTEM_MESSAGE: ", import.meta.env.PUBLIC_SYSTEM_MESSAGE);
 
         try {
-            // Connect to Gradio client
+            // Connect to Gradio client (sin token para Space público)
             const client = await Client.connect(
-                "jcm-developer/portfolio-chatbot",
-                {
-                    hf_token: import.meta.env.PUBLIC_HF_TOKEN,
-                },
+                "jcm-developer/portfolio-chatbot"
             );
 
             // Check if generation was stopped
