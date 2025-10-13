@@ -24,6 +24,7 @@ jobs:
         uses: withastro/action@v3
         env:
           PUBLIC_SYSTEM_MESSAGE: ${{ vars.PUBLIC_SYSTEM_MESSAGE }}
+          PUBLIC_HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
   deploy:
     needs: build

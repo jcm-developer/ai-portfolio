@@ -70,8 +70,6 @@
         initLanguageSwitcher,
     } from "../scripts/i18n.js";
 
-    console.log("🧠 Env var:", import.meta.env.PUBLIC_SYSTEM_MESSAGE);
-
     let container, chatsContainer, promptForm, promptInput;
     let typingInterval, controller;
     let isGenerating = false;
@@ -138,6 +136,9 @@
             // Connect to Gradio client
             const client = await Client.connect(
                 "jcm-developer/portfolio-chatbot",
+                {
+                    hf_token: import.meta.env.PUBLIC_HF_TOKEN,
+                },
             );
 
             // Check if generation was stopped
