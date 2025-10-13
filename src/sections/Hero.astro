@@ -132,7 +132,8 @@
             parts: [{ text: userData.message }],
         });
 
-        console.log(import.meta.env.PUBLIC_HF_TOKEN);
+        console.log("HF_TOKEN: ", import.meta.env.PUBLIC_HF_TOKEN);
+        console.log("SYSTEM_MESSAGE: ", import.meta.env.PUBLIC_SYSTEM_MESSAGE);
 
         try {
             // Connect to Gradio client
