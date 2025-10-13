@@ -132,6 +132,8 @@
             parts: [{ text: userData.message }],
         });
 
+        console.log(import.meta.env.PUBLIC_HF_TOKEN);
+
         try {
             // Connect to Gradio client
             const client = await Client.connect(
