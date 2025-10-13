@@ -70,6 +70,8 @@
         initLanguageSwitcher,
     } from "../scripts/i18n.js";
 
+    console.log("🧠 Env var:", import.meta.env.PUBLIC_SYSTEM_MESSAGE);
+
     let container, chatsContainer, promptForm, promptInput;
     let typingInterval, controller;
     let isGenerating = false;
@@ -152,7 +154,12 @@
                 top_p: 0.9,
             };
 
+            console.log("📤 Sending request to Gradio:", requestPayload);
+
             const result = await client.predict("/chat", requestPayload);
+
+            console.log("📥 Received response from Gradio:", result);
+            console.log("📊 Response data:", result.data);
 
             // Check again if generation was stopped
             if (!isGenerating) {
@@ -188,20 +195,11 @@
                 parts: [{ text: textResponse }],
             });
         } catch (error) {
-            console.error("Error generating response:", error);
             textElement.style.color = "#d62939";
-            
-            // Handle different error types
-            if (error.message === "Response generation stopped.") {
-                textElement.textContent = "Response generation stopped.";
-            } else if (error.name === "TypeError" || error.message.includes("fetch")) {
-                textElement.textContent = "Connection error. Please check your internet connection.";
-            } else if (error.message.includes("timeout")) {
-                textElement.textContent = "Request timeout. Please try again.";
-            } else {
-                textElement.textContent = "An error occurred. Please try again later.";
-            }
-            
+            textElement.textContent =
+                error.message === "Response generation stopped."
+                    ? "Response generation stopped."
+                    : error.message;
             botMsgDiv.classList.remove("loading");
             document.body.classList.remove("bot-responding");
             isGenerating = false;
