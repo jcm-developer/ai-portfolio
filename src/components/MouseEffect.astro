@@ -1,0 +1,93 @@
+<div id="mouse-effect">
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+    <div class="circle"></div>
+</div>
+
+<script>
+    interface CircleElement extends HTMLElement {
+        x: number;
+        y: number;
+    }
+
+    const coords = { x: 0, y: 0 };
+    const circles = document.querySelectorAll(
+        ".circle",
+    ) as NodeListOf<CircleElement>;
+
+    circles.forEach(function (circle) {
+        circle.x = 0;
+        circle.y = 0;
+    });
+
+    window.addEventListener("mousemove", function (e) {
+        coords.x = e.clientX;
+        coords.y = e.clientY;
+    });
+
+    function animateCircles() {
+        let x = coords.x;
+        let y = coords.y;
+
+        circles.forEach(function (circle, index) {
+            circle.style.left = x - 12 + "px";
+            circle.style.top = y - 12 + "px";
+
+            circle.style.scale = String(
+                (circles.length - index) / circles.length,
+            );
+
+            circle.x = x;
+            circle.y = y;
+
+            const nextCircle = circles[index + 1] || circles[0];
+            x += (nextCircle.x - x) * 0.2;
+            y += (nextCircle.y - y) * 0.2;
+        });
+
+        requestAnimationFrame(animateCircles);
+    }
+
+    animateCircles();
+</script>
+
+<style>
+    #mouse-effect {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 9999;
+    }
+
+    .circle {
+        height: 24px;
+        width: 24px;
+        border-radius: 50%;
+        background-color: black;
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+    }
+</style>

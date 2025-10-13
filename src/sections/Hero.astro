@@ -1,0 +1,67 @@
+<main class="container">
+    <!-- Suggestions List -->
+    <ul class="suggestions">
+        <li class="suggestions-item" data-suggestion="0">
+            <p class="text" data-i18n="suggestions.0">
+                What projects have Jaume worked on?
+            </p>
+            <span class="material-symbols-outlined"> cases </span>
+        </li>
+        <li class="suggestions-item" data-suggestion="1">
+            <p class="text" data-i18n="suggestions.1">
+                Could you please provide me with Jaume's CV link?
+            </p>
+            <span class="material-symbols-outlined"> article_person </span>
+        </li>
+        <li class="suggestions-item" data-suggestion="2">
+            <p class="text" data-i18n="suggestions.2">
+                What are Jaume's studies and experience?
+            </p>
+            <span class="material-symbols-outlined"> book_ribbon </span>
+        </li>
+        <li class="suggestions-item" data-suggestion="3">
+            <p class="text" data-i18n="suggestions.3">
+                What are Jaume's skills and knowledge?
+            </p>
+            <span class="material-symbols-outlined">
+                network_intelligence
+            </span>
+        </li>
+    </ul>
+
+    <!-- Chats -->
+    <div class="chats-container"></div>
+
+    <!-- Prompt -->
+    <div class="prompt-container">
+        <div class="prompt-wrapper">
+            <form action="#" class="prompt-form">
+                <input
+                    type="text"
+                    placeholder="Ask my assistant about me..."
+                    class="prompt-input"
+                    data-i18n-placeholder="placeholder"
+                    required
+                />
+                <div class="prompt-actions">
+                    <button
+                        type="button"
+                        id="stop-response-btn"
+                        class="material-symbols-outlined">stop_circle</button
+                    >
+                    <button
+                        id="send-prompt-btn"
+                        class="material-symbols-outlined">arrow_upward</button
+                    >
+                </div>
+            </form>
+            <button id="delete-chats-btn" class="material-symbols-outlined"
+                >delete</button
+            >
+        </div>
+    </div>
+</main>
+
+<script type="module">
+    import "/src/scripts/chat.js";
+</script>

@@ -1,5 +1,6 @@
 # build output
 dist/
+.output/
 
 # generated types
 .astro/
@@ -15,13 +16,64 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
 # environment variables
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 .env.production
+
+# editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # macOS-specific files
 .DS_Store
+.AppleDouble
+.LSOverride
 
-# jetbrains setting folder
-.idea/
+# Windows-specific files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Linux-specific files
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# temporary files
+*.tmp
+*.temp
+*.log
+.cache/
+
+# testing
+coverage/
+.nyc_output/
+*.lcov
+
+# vercel
+.vercel
+
+# netlify
+.netlify
+
+# misc
+*.pem
