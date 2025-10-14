@@ -136,6 +136,9 @@
             // Connect to Gradio client (sin token para Space público)
             const client = await Client.connect(
                 "jcm-developer/portfolio-chatbot",
+                {
+                    hf_token: import.meta.env.PUBLIC_HF_TOKEN,
+                },
             );
 
             // Check if generation was stopped
