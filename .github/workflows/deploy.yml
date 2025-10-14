@@ -23,8 +23,8 @@ jobs:
       - name: Install, build, and upload your site
         uses: withastro/action@v3
         env:
-          PUBLIC_SYSTEM_MESSAGE: ${{ vars.PUBLIC_SYSTEM_MESSAGE }}
-          PUBLIC_HF_TOKEN: ${{ vars.PUBLIC_HF_TOKEN }}
+          PUBLIC_SYSTEM_MESSAGE_EN: ${{ vars.PUBLIC_SYSTEM_MESSAGE_EN }}
+          PUBLIC_SYSTEM_MESSAGE_ES: ${{ vars.PUBLIC_SYSTEM_MESSAGE_ES }}
 
   deploy:
     needs: build
