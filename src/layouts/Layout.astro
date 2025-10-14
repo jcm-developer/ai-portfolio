@@ -17,27 +17,51 @@ import MouseEffect from "../components/MouseEffect.astro";
 			rel="stylesheet"
 			href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
 		/>
-		
+
 		<!-- SEO -->
 		<title>Jaume Cortés | AI Portfolio</title>
-		<meta name="description" content="Interactive AI-powered portfolio of Jaume Cortés. Chat with my AI assistant to learn about my projects, skills, and experience." />
-		<meta name="keywords" content="portfolio, jaume cortés, web developer, ai portfolio, chatbot, gradio" />
+		<meta
+			name="description"
+			content="Interactive AI-powered portfolio of Jaume Cortés. Chat with my AI assistant to learn about my projects, skills, and experience."
+		/>
+		<meta
+			name="keywords"
+			content="portfolio, jaume cortés, web developer, ai portfolio, chatbot, gradio"
+		/>
 		<meta name="author" content="Jaume Cortés" />
 		<meta name="robots" content="index, follow" />
-		
+
 		<!-- Open Graph / Facebook -->
 		<meta property="og:type" content="website" />
-		<meta property="og:url" content="https://jcm-developer.github.io/my-portfolio/" />
+		<meta
+			property="og:url"
+			content="https://jcm-developer.github.io/my-portfolio/"
+		/>
 		<meta property="og:title" content="Jaume Cortés | AI Portfolio" />
-		<meta property="og:description" content="Interactive AI-powered portfolio. Chat with my AI assistant to learn about my projects and skills." />
-		<meta property="og:image" content={`${import.meta.env.BASE_URL}img/logo.png`} />
-		
+		<meta
+			property="og:description"
+			content="Interactive AI-powered portfolio. Chat with my AI assistant to learn about my projects and skills."
+		/>
+		<meta
+			property="og:image"
+			content={`${import.meta.env.BASE_URL}img/logo.png`}
+		/>
+
 		<!-- Twitter -->
 		<meta property="twitter:card" content="summary_large_image" />
-		<meta property="twitter:url" content="https://jcm-developer.github.io/my-portfolio/" />
+		<meta
+			property="twitter:url"
+			content="https://jcm-developer.github.io/my-portfolio/"
+		/>
 		<meta property="twitter:title" content="Jaume Cortés | AI Portfolio" />
-		<meta property="twitter:description" content="Interactive AI-powered portfolio. Chat with my AI assistant!" />
-		<meta property="twitter:image" content={`${import.meta.env.BASE_URL}img/logo.png`} />
+		<meta
+			property="twitter:description"
+			content="Interactive AI-powered portfolio. Chat with my AI assistant!"
+		/>
+		<meta
+			property="twitter:image"
+			content={`${import.meta.env.BASE_URL}img/logo.png`}
+		/>
 	</head>
 	<body>
 		<slot />
