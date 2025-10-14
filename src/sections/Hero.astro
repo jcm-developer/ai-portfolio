@@ -64,7 +64,6 @@
 
 <script>
     // @ts-nocheck
-    import { Client } from "@gradio/client";
     import {
         applyTranslations,
         initLanguageSwitcher,
@@ -99,7 +98,6 @@
         let wordIndex = 0;
 
         typingInterval = setInterval(() => {
-            // Check if generation was stopped
             if (!isGenerating) {
                 clearInterval(typingInterval);
                 botMsgDiv.classList.remove("loading");
@@ -126,76 +124,144 @@
         controller = new AbortController();
         isGenerating = true;
 
-        // Save user message into history
-        chatHistory.push({
-            role: "user",
-            parts: [{ text: userData.message }],
-        });
-
         try {
-            // Connect to Gradio client (sin token para Space público)
-            const client = await Client.connect(
-                "jcm-developer/portfolio-chatbot",
+            // Paso 1: POST para unirse a la cola
+            const postResponse = await fetch(
+                "https://jcm-developer-portfolio-chatbot.hf.space/call/predict",
                 {
-                    hf_token: import.meta.env.PUBLIC_HF_TOKEN,
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        data: [
+                            userData.message,
+                            chatHistory,
+                            import.meta.env.PUBLIC_SYSTEM_MESSAGE ||
+                                "You are a friendly Chatbot.",
+                            512,
+                            0.7,
+                            0.95,
+                        ],
+                    }),
+                    signal: controller.signal,
                 },
             );
 
-            // Check if generation was stopped
+            if (!postResponse.ok) {
+                throw new Error(`HTTP error! status: ${postResponse.status}`);
+            }
+
+            const { event_id } = await postResponse.json();
+
             if (!isGenerating) {
                 throw new Error("Response generation stopped.");
             }
 
-            // Make prediction
-            const requestPayload = {
-                message: userData.message,
-                system_message: import.meta.env.PUBLIC_SYSTEM_MESSAGE,
-                max_tokens: 512,
-                temperature: 0.7,
-                top_p: 0.9,
-            };
+            // Paso 2: GET para recibir el resultado (SSE streaming)
+            const eventSource = new EventSource(
+                `https://jcm-developer-portfolio-chatbot.hf.space/call/predict/${event_id}`,
+            );
 
-            const result = await client.predict("/chat", requestPayload);
+            let fullResponse = "";
 
-            // Check again if generation was stopped
-            if (!isGenerating) {
-                throw new Error("Response generation stopped.");
-            }
+            eventSource.addEventListener("generating", (event) => {
+                if (!isGenerating) {
+                    eventSource.close();
+                    return;
+                }
 
-            // Extract response text - Gradio returns data as array or object
-            let textResponse = "";
-            if (typeof result.data === "string") {
-                textResponse = result.data;
-            } else if (Array.isArray(result.data)) {
-                textResponse = result.data[0] || "";
-            } else if (result.data && typeof result.data === "object") {
-                textResponse =
-                    result.data.message ||
-                    result.data.text ||
-                    JSON.stringify(result.data);
-            }
+                try {
+                    const data = JSON.parse(event.data);
+                    // El formato puede ser: ["texto"] o [["user", "texto"]]
+                    if (Array.isArray(data) && data.length > 0) {
+                        if (typeof data[0] === "string") {
+                            fullResponse = data[0];
+                        } else if (
+                            Array.isArray(data[0]) &&
+                            data[0].length > 1
+                        ) {
+                            fullResponse = data[0][1];
+                        }
+                    }
 
-            textResponse = textResponse
-                .replace(/\*\*([^*]+)\*\*/g, "$1")
-                .trim();
+                    // Update text in real-time
+                    textElement.textContent = fullResponse
+                        .replace(/\*\*([^*]+)\*\*/g, "$1")
+                        .trim();
+                    scrollToBottom();
+                } catch (e) {
+                    console.error("Error parsing SSE data:", e);
+                }
+            });
 
-            // Check one more time before typing
-            if (!isGenerating) {
-                throw new Error("Response generation stopped.");
-            }
+            eventSource.addEventListener("complete", (event) => {
+                eventSource.close();
 
-            typingEffect(textResponse, textElement, botMsgDiv);
+                if (!isGenerating) {
+                    return;
+                }
 
-            chatHistory.push({
-                role: "model",
-                parts: [{ text: textResponse }],
+                try {
+                    const data = JSON.parse(event.data);
+                    if (Array.isArray(data) && data.length > 0) {
+                        if (typeof data[0] === "string") {
+                            fullResponse = data[0];
+                        } else if (
+                            Array.isArray(data[0]) &&
+                            data[0].length > 1
+                        ) {
+                            fullResponse = data[0][1];
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error parsing complete data:", e);
+                }
+
+                const cleanResponse = fullResponse
+                    .replace(/\*\*([^*]+)\*\*/g, "$1")
+                    .trim();
+
+                // Use typing effect for final response
+                typingEffect(cleanResponse, textElement, botMsgDiv);
+
+                // Save to history
+                chatHistory.push({
+                    role: "user",
+                    content: userData.message,
+                });
+                chatHistory.push({
+                    role: "assistant",
+                    content: cleanResponse,
+                });
+            });
+
+            eventSource.addEventListener("error", (event) => {
+                eventSource.close();
+
+                if (!isGenerating) {
+                    return;
+                }
+
+                textElement.style.color = "#d62939";
+                textElement.textContent = "Error connecting to the server.";
+                botMsgDiv.classList.remove("loading");
+                document.body.classList.remove("bot-responding");
+                isGenerating = false;
+            });
+
+            // Handle abort
+            controller.signal.addEventListener("abort", () => {
+                eventSource.close();
             });
         } catch (error) {
-            textElement.style.color = "#d62939";
-            textElement.textContent =
-                error.message === "Response generation stopped."
-                    ? "Response generation stopped."
-                    : error.message;
+            if (error.name === "AbortError") {
+                textElement.style.color = "#d62939";
+                textElement.textContent = "Response generation stopped.";
+            } else {
+                textElement.style.color = "#d62939";
+                textElement.textContent = error.message || "An error occurred.";
+            }
             botMsgDiv.classList.remove("loading");
             document.body.classList.remove("bot-responding");
             isGenerating = false;
@@ -217,23 +283,12 @@
 
         const userMsgHTML = `
         <p class="message-text"></p>
-        ${
-            userData.file.data
-                ? userData.file.isImage
-                    ? `<img src="data:${userData.file.mime_type};base64,${userData.file.data}" class="img-attachment" />`
-                    : `<p class="file-attachment">
-                  <span class="material-symbols-outlined">description</span>
-                  ${userData.file.fileName}
-                 </p>`
-                : ""
-        }
-      `;
+    `;
         const userMsgDiv = createMsgElement(userMsgHTML, "user-message");
         userMsgDiv.querySelector(".message-text").textContent = userMessage;
         chatsContainer.appendChild(userMsgDiv);
         scrollToBottom();
 
-        // Simulate loading then send request
         setTimeout(() => {
             const botMsgHTML = `
           <img src="${import.meta.env.BASE_URL}img/avatar.png" alt="bot" class="avatar">
@@ -252,7 +307,6 @@
 
     // Initialize DOM references and events
     window.addEventListener("DOMContentLoaded", () => {
-        // Apply translations and initialize language switcher
         applyTranslations();
         initLanguageSwitcher();
 
@@ -265,13 +319,11 @@
         document
             .querySelector("#stop-response-btn")
             ?.addEventListener("click", () => {
-                // Immediately stop generation
                 isGenerating = false;
                 userData.file = {};
                 controller?.abort();
                 clearInterval(typingInterval);
 
-                // Update UI immediately
                 const loadingBot = chatsContainer?.querySelector(
                     ".bot-message.loading",
                 );
