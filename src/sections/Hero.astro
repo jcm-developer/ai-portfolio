@@ -67,6 +67,7 @@
     import {
         applyTranslations,
         initLanguageSwitcher,
+        getPreferredLanguage,
     } from "../scripts/i18n.js";
 
     let container, chatsContainer, promptForm, promptInput;
@@ -124,10 +125,16 @@
         controller = new AbortController();
         isGenerating = true;
 
+        // Get current language and select appropriate system message
+        const currentLang = getPreferredLanguage();
+        const systemMessage =
+            currentLang === "es"
+                ? import.meta.env.PUBLIC_SYSTEM_MESSAGE_ES
+                : import.meta.env.PUBLIC_SYSTEM_MESSAGE_EN;
+
         try {
-            // Paso 1: POST para unirse a la cola
             const postResponse = await fetch(
-                "https://jcm-developer-portfolio-chatbot.hf.space/call/predict",
+                "https://jcm-developer-portfolio-chatbot.hf.space/gradio_api/call/predict",
                 {
                     method: "POST",
                     headers: {
@@ -137,8 +144,7 @@
                         data: [
                             userData.message,
                             chatHistory,
-                            import.meta.env.PUBLIC_SYSTEM_MESSAGE ||
-                                "You are a friendly Chatbot.",
+                            systemMessage,
                             512,
                             0.7,
                             0.95,
@@ -158,9 +164,8 @@
                 throw new Error("Response generation stopped.");
             }
 
-            // Paso 2: GET para recibir el resultado (SSE streaming)
             const eventSource = new EventSource(
-                `https://jcm-developer-portfolio-chatbot.hf.space/call/predict/${event_id}`,
+                `https://jcm-developer-portfolio-chatbot.hf.space/gradio_api/call/predict/${event_id}`,
             );
 
             let fullResponse = "";
@@ -173,7 +178,6 @@
 
                 try {
                     const data = JSON.parse(event.data);
-                    // El formato puede ser: ["texto"] o [["user", "texto"]]
                     if (Array.isArray(data) && data.length > 0) {
                         if (typeof data[0] === "string") {
                             fullResponse = data[0];
@@ -185,7 +189,6 @@
                         }
                     }
 
-                    // Update text in real-time
                     textElement.textContent = fullResponse
                         .replace(/\*\*([^*]+)\*\*/g, "$1")
                         .trim();
@@ -222,10 +225,11 @@
                     .replace(/\*\*([^*]+)\*\*/g, "$1")
                     .trim();
 
-                // Use typing effect for final response
-                typingEffect(cleanResponse, textElement, botMsgDiv);
+                textElement.textContent = cleanResponse;
+                botMsgDiv.classList.remove("loading");
+                document.body.classList.remove("bot-responding");
+                isGenerating = false;
 
-                // Save to history
                 chatHistory.push({
                     role: "user",
                     content: userData.message,
@@ -250,7 +254,6 @@
                 isGenerating = false;
             });
 
-            // Handle abort
             controller.signal.addEventListener("abort", () => {
                 eventSource.close();
             });

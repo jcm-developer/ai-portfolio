@@ -54,38 +54,30 @@ const generateResponse = async (botMsgDiv) => {
     controller = new AbortController();
     isGenerating = true;
 
-    // Save user message into history
     chatHistory.push({
         role: "user",
         parts: [{ text: userData.message }],
     });
 
     try {
-        // Connect to Gradio client
         const client = await Client.connect("jcm-developer/portfolio-chatbot");
 
-        // Check if generation was stopped
         if (!isGenerating) {
             throw new Error("Response generation stopped.");
         }
 
-        // Make prediction
-        const requestPayload = {
+        const result = await client.predict("/chat", {
             message: userData.message,
             system_message: import.meta.env.PUBLIC_SYSTEM_MESSAGE,
             max_tokens: 512,
             temperature: 0.7,
             top_p: 0.9,
-        };
+        });
 
-        const result = await client.predict("/chat", requestPayload);
-
-        // Check again if generation was stopped
         if (!isGenerating) {
             throw new Error("Response generation stopped.");
         }
 
-        // Extract response text - Gradio returns data as array or object
         let textResponse = "";
         if (typeof result.data === "string") {
             textResponse = result.data;
@@ -99,7 +91,6 @@ const generateResponse = async (botMsgDiv) => {
             .replace(/\*\*([^*]+)\*\*/g, "$1")
             .trim();
 
-        // Check one more time before typing
         if (!isGenerating) {
             throw new Error("Response generation stopped.");
         }
