@@ -32,8 +32,32 @@
     <!-- Chats -->
     <div class="chats-container"></div>
 
+    <!-- Suggestions Conversation List -->
+    <ul class="suggestions-conversation">
+        <li class="suggestions-conversation-item" data-suggestion="0">
+            <p class="text" data-i18n="suggestions.0">
+                What projects have Jaume worked on?
+            </p>
+        </li>
+        <li class="suggestions-conversation-item" data-suggestion="1">
+            <p class="text" data-i18n="suggestions.1">
+                Could you please provide me with Jaume's CV link?
+            </p>
+        </li>
+        <li class="suggestions-conversation-item" data-suggestion="2">
+            <p class="text" data-i18n="suggestions.2">
+                What are Jaume's studies and experience?
+            </p>
+        </li>
+        <li class="suggestions-conversation-item" data-suggestion="3">
+            <p class="text" data-i18n="suggestions.3">
+                What are Jaume's skills and knowledge?
+            </p>
+        </li>
+    </ul>
+
     <!-- Prompt -->
-    <div class="prompt-container animate-slide-in-bottom ">
+    <div class="prompt-container animate-slide-in-bottom">
         <div class="prompt-wrapper">
             <form action="#" class="prompt-form">
                 <input
@@ -365,6 +389,16 @@
                 promptForm.dispatchEvent(new Event("submit"));
             });
         });
+
+        // Handle suggestion clicks
+        document
+            .querySelectorAll(".suggestions-conversation-item")
+            ?.forEach((item) => {
+                item.addEventListener("click", () => {
+                    promptInput.value = item.querySelector(".text").textContent;
+                    promptForm.dispatchEvent(new Event("submit"));
+                });
+            });
 
         // Show/hide controls on mobile
         document.addEventListener("click", ({ target }) => {
