@@ -33,7 +33,7 @@
     <div class="chats-container"></div>
 
     <!-- Prompt -->
-    <div class="prompt-container animate-slide-in-bottom ">
+    <div class="prompt-container animate-slide-in-bottom">
         <div class="prompt-wrapper">
             <form action="#" class="prompt-form">
                 <input
@@ -69,12 +69,53 @@
         initLanguageSwitcher,
         getPreferredLanguage,
     } from "../scripts/i18n.js";
+    import { projects } from "../data/projects.js";
+    import { cvLinks } from "../data/cvLinks.js";
 
     let container, chatsContainer, promptForm, promptInput;
     let typingInterval, controller;
     let isGenerating = false;
+    let pendingSuggestionIndex = null;
     const chatHistory = [];
     const userData = { message: "", file: {} };
+
+    // Build project cards HTML
+    const buildProjectCardsHTML = () => {
+        const lang = getPreferredLanguage();
+        const base = import.meta.env.BASE_URL;
+        const cardsHTML = projects
+            .map(
+                (p, i) => `
+            <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="project-card" data-index="${i}">
+                <img src="${base}${p.image}" alt="${p.name}" class="project-card-img" />
+                <div class="project-card-body">
+                    <span class="project-card-name">${p.name}</span>
+                    <span class="project-card-desc">${p.description[lang] || p.description.en}</span>
+                </div>
+            </a>`,
+            )
+            .join("");
+        return `<div class="project-cards">${cardsHTML}</div>`;
+    };
+
+    // Build CV cards HTML
+    const buildCvCardsHTML = () => {
+        const lang = getPreferredLanguage();
+        const base = import.meta.env.BASE_URL;
+        const cardsHTML = cvLinks
+            .map(
+                (c, i) => `
+            <a href="${c.url}" target="_blank" rel="noopener noreferrer" class="project-card" data-index="${i}">
+                <img src="${base}${c.image}" alt="${c.name}" class="project-card-img" />
+                <div class="project-card-body">
+                    <span class="project-card-name">${c.name}</span>
+                    <span class="project-card-desc">${c.description[lang] || c.description.en}</span>
+                </div>
+            </a>`,
+            )
+            .join("");
+        return `<div class="project-cards">${cardsHTML}</div>`;
+    };
 
     // Helper: create message elements dynamically
     const createMsgElement = (content, ...classes) => {
@@ -119,7 +160,7 @@
         }, 40);
     };
 
-    // Generate bot response via API call
+    // Generate bot response via OpenAI API call
     const generateResponse = async (botMsgDiv) => {
         const textElement = botMsgDiv.querySelector(".message-text");
         controller = new AbortController();
@@ -132,130 +173,65 @@
                 ? import.meta.env.PUBLIC_SYSTEM_MESSAGE_ES
                 : import.meta.env.PUBLIC_SYSTEM_MESSAGE_EN;
 
+        // Build messages array for OpenAI
+        const messages = [
+            { role: "system", content: systemMessage },
+            ...chatHistory,
+            { role: "user", content: userData.message },
+        ];
+
         try {
-            const postResponse = await fetch(
-                "https://jcm-developer-portfolio-chatbot.hf.space/gradio_api/call/predict",
+            const response = await fetch(
+                "https://api.openai.com/v1/chat/completions",
                 {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        Authorization: `Bearer ${import.meta.env.PUBLIC_OPENAI_API_KEY}`,
                     },
                     body: JSON.stringify({
-                        data: [
-                            userData.message,
-                            chatHistory,
-                            systemMessage,
-                            512,
-                            0.7,
-                            0.95,
-                        ],
+                        model:
+                            import.meta.env.PUBLIC_OPENAI_MODEL ||
+                            "gpt-4o-mini",
+                        messages: messages,
+                        max_tokens: 512,
+                        temperature: 0.7,
+                        top_p: 0.95,
                     }),
                     signal: controller.signal,
                 },
             );
 
-            if (!postResponse.ok) {
-                throw new Error(`HTTP error! status: ${postResponse.status}`);
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(
+                    errorData?.error?.message ||
+                        `HTTP error! status: ${response.status}`,
+                );
             }
-
-            const { event_id } = await postResponse.json();
 
             if (!isGenerating) {
                 throw new Error("Response generation stopped.");
             }
 
-            const eventSource = new EventSource(
-                `https://jcm-developer-portfolio-chatbot.hf.space/gradio_api/call/predict/${event_id}`,
-            );
+            const data = await response.json();
+            const textResponse = (data.choices?.[0]?.message?.content || "")
+                .replace(/\*\*([^*]+)\*\*/g, "$1")
+                .trim();
 
-            let fullResponse = "";
+            if (!isGenerating) {
+                throw new Error("Response generation stopped.");
+            }
 
-            eventSource.addEventListener("generating", (event) => {
-                if (!isGenerating) {
-                    eventSource.close();
-                    return;
-                }
+            typingEffect(textResponse, textElement, botMsgDiv);
 
-                try {
-                    const data = JSON.parse(event.data);
-                    if (Array.isArray(data) && data.length > 0) {
-                        if (typeof data[0] === "string") {
-                            fullResponse = data[0];
-                        } else if (
-                            Array.isArray(data[0]) &&
-                            data[0].length > 1
-                        ) {
-                            fullResponse = data[0][1];
-                        }
-                    }
-
-                    textElement.textContent = fullResponse
-                        .replace(/\*\*([^*]+)\*\*/g, "$1")
-                        .trim();
-                    scrollToBottom();
-                } catch (e) {
-                    console.error("Error parsing SSE data:", e);
-                }
+            chatHistory.push({
+                role: "user",
+                content: userData.message,
             });
-
-            eventSource.addEventListener("complete", (event) => {
-                eventSource.close();
-
-                if (!isGenerating) {
-                    return;
-                }
-
-                try {
-                    const data = JSON.parse(event.data);
-                    if (Array.isArray(data) && data.length > 0) {
-                        if (typeof data[0] === "string") {
-                            fullResponse = data[0];
-                        } else if (
-                            Array.isArray(data[0]) &&
-                            data[0].length > 1
-                        ) {
-                            fullResponse = data[0][1];
-                        }
-                    }
-                } catch (e) {
-                    console.error("Error parsing complete data:", e);
-                }
-
-                const cleanResponse = fullResponse
-                    .replace(/\*\*([^*]+)\*\*/g, "$1")
-                    .trim();
-
-                textElement.textContent = cleanResponse;
-                botMsgDiv.classList.remove("loading");
-                document.body.classList.remove("bot-responding");
-                isGenerating = false;
-
-                chatHistory.push({
-                    role: "user",
-                    content: userData.message,
-                });
-                chatHistory.push({
-                    role: "assistant",
-                    content: cleanResponse,
-                });
-            });
-
-            eventSource.addEventListener("error", (event) => {
-                eventSource.close();
-
-                if (!isGenerating) {
-                    return;
-                }
-
-                textElement.style.color = "#d62939";
-                textElement.textContent = "Error connecting to the server.";
-                botMsgDiv.classList.remove("loading");
-                document.body.classList.remove("bot-responding");
-                isGenerating = false;
-            });
-
-            controller.signal.addEventListener("abort", () => {
-                eventSource.close();
+            chatHistory.push({
+                role: "assistant",
+                content: textResponse,
             });
         } catch (error) {
             if (error.name === "AbortError") {
@@ -293,6 +269,67 @@
         scrollToBottom();
 
         setTimeout(() => {
+            // Inject project cards if suggestion 0 was clicked — skip API call
+            if (pendingSuggestionIndex === 0) {
+                const cardsDiv = document.createElement("div");
+                cardsDiv.classList.add(
+                    "message",
+                    "bot-message",
+                    "project-cards-message",
+                );
+                cardsDiv.innerHTML = buildProjectCardsHTML();
+                chatsContainer.appendChild(cardsDiv);
+                scrollToBottom();
+
+                // Static response instead of API call
+                const lang = getPreferredLanguage();
+                const staticMsg =
+                    lang === "es"
+                        ? "Aquí tienes algunos de los proyectos más destacados en los que he trabajado. ¿Quieres saber más detalles sobre alguno?"
+                        : "Here are some of the most notable projects I've worked on. Do you want to know more details about any of them?";
+                const botMsgHTML = `
+                    <img src="${import.meta.env.BASE_URL}img/avatar.png" alt="bot" class="avatar">
+                    <p class="message-text">${staticMsg}</p>
+                `;
+                const botMsgDiv = createMsgElement(botMsgHTML, "bot-message");
+                chatsContainer.appendChild(botMsgDiv);
+                scrollToBottom();
+                document.body.classList.remove("bot-responding");
+                pendingSuggestionIndex = null;
+                return;
+            }
+
+            // Inject CV cards if suggestion 1 was clicked — skip API call
+            if (pendingSuggestionIndex === 1) {
+                const cardsDiv = document.createElement("div");
+                cardsDiv.classList.add(
+                    "message",
+                    "bot-message",
+                    "project-cards-message",
+                    "cv-cards-message",
+                );
+                cardsDiv.innerHTML = buildCvCardsHTML();
+                chatsContainer.appendChild(cardsDiv);
+                scrollToBottom();
+
+                // Static response instead of API call
+                const lang = getPreferredLanguage();
+                const staticMsg =
+                    lang === "es"
+                        ? "Aquí tienes mis CV's. ¿Necesitas algo más o quieres saber algo sobre mí?"
+                        : "Here are my CVs. Do you need anything else or want to know something about me?";
+                const botMsgHTML = `
+                    <img src="${import.meta.env.BASE_URL}img/avatar.png" alt="bot" class="avatar">
+                    <p class="message-text">${staticMsg}</p>
+                `;
+                const botMsgDiv = createMsgElement(botMsgHTML, "bot-message");
+                chatsContainer.appendChild(botMsgDiv);
+                scrollToBottom();
+                document.body.classList.remove("bot-responding");
+                pendingSuggestionIndex = null;
+                return;
+            }
+
             const botMsgHTML = `
           <img src="${import.meta.env.BASE_URL}img/avatar.png" alt="bot" class="avatar">
           <p class="message-text">Processing...</p>
@@ -361,6 +398,8 @@
         // Handle suggestion clicks
         document.querySelectorAll(".suggestions-item")?.forEach((item) => {
             item.addEventListener("click", () => {
+                const idx = parseInt(item.getAttribute("data-suggestion"), 10);
+                pendingSuggestionIndex = idx;
                 promptInput.value = item.querySelector(".text").textContent;
                 promptForm.dispatchEvent(new Event("submit"));
             });

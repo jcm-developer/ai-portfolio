@@ -9,10 +9,9 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@gradio/client": "^1.19.1",
     "@midudev/tailwind-animations": "^0.2.0",
     "@tailwindcss/vite": "^4.1.14",
-    "astro": "^5.14.4",
+    "astro": "^5.17.1",
     "tailwindcss": "^4.1.14"
   }
 }

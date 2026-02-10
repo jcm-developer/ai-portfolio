@@ -25,6 +25,8 @@ jobs:
         env:
           PUBLIC_SYSTEM_MESSAGE_EN: ${{ vars.PUBLIC_SYSTEM_MESSAGE_EN }}
           PUBLIC_SYSTEM_MESSAGE_ES: ${{ vars.PUBLIC_SYSTEM_MESSAGE_ES }}
+          PUBLIC_OPENAI_API_KEY: ${{ secrets.PUBLIC_OPENAI_API_KEY }}
+          PUBLIC_OPENAI_MODEL: ${{ vars.PUBLIC_OPENAI_MODEL }}
 
   deploy:
     needs: build

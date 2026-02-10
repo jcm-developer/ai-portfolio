@@ -1,5 +1,4 @@
 // Chat logic ported from Vue to Astro (no framework needed)
-import { Client } from "@gradio/client";
 import { applyTranslations, initLanguageSwitcher } from "./i18n.js";
 
 let container, chatsContainer, promptForm, promptInput;
@@ -48,46 +47,52 @@ const typingEffect = (text, textElement, botMsgDiv) => {
     }, 40);
 };
 
-// Generate bot response via API call
+// Generate bot response via OpenAI API call
 const generateResponse = async (botMsgDiv) => {
     const textElement = botMsgDiv.querySelector(".message-text");
     controller = new AbortController();
     isGenerating = true;
 
-    chatHistory.push({
-        role: "user",
-        parts: [{ text: userData.message }],
-    });
+    // Build messages array for OpenAI
+    const messages = [
+        { role: "system", content: import.meta.env.PUBLIC_SYSTEM_MESSAGE },
+        ...chatHistory,
+        { role: "user", content: userData.message },
+    ];
 
     try {
-        const client = await Client.connect("jcm-developer/portfolio-chatbot");
+        const response = await fetch(
+            "https://api.openai.com/v1/chat/completions",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${import.meta.env.PUBLIC_OPENAI_API_KEY}`,
+                },
+                body: JSON.stringify({
+                    model: import.meta.env.PUBLIC_OPENAI_MODEL || "gpt-4o-mini",
+                    messages: messages,
+                    max_tokens: 512,
+                    temperature: 0.7,
+                    top_p: 0.9,
+                }),
+                signal: controller.signal,
+            }
+        );
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(
+                errorData?.error?.message || `HTTP error! status: ${response.status}`
+            );
+        }
 
         if (!isGenerating) {
             throw new Error("Response generation stopped.");
         }
 
-        const result = await client.predict("/chat", {
-            message: userData.message,
-            system_message: import.meta.env.PUBLIC_SYSTEM_MESSAGE,
-            max_tokens: 512,
-            temperature: 0.7,
-            top_p: 0.9,
-        });
-
-        if (!isGenerating) {
-            throw new Error("Response generation stopped.");
-        }
-
-        let textResponse = "";
-        if (typeof result.data === "string") {
-            textResponse = result.data;
-        } else if (Array.isArray(result.data)) {
-            textResponse = result.data[0] || "";
-        } else if (result.data && typeof result.data === "object") {
-            textResponse = result.data.message || result.data.text || JSON.stringify(result.data);
-        }
-
-        textResponse = textResponse
+        const data = await response.json();
+        const textResponse = (data.choices?.[0]?.message?.content || "")
             .replace(/\*\*([^*]+)\*\*/g, "$1")
             .trim();
 
@@ -98,8 +103,12 @@ const generateResponse = async (botMsgDiv) => {
         typingEffect(textResponse, textElement, botMsgDiv);
 
         chatHistory.push({
-            role: "model",
-            parts: [{ text: textResponse }],
+            role: "user",
+            content: userData.message,
+        });
+        chatHistory.push({
+            role: "assistant",
+            content: textResponse,
         });
     } catch (error) {
         textElement.style.color = "#d62939";
