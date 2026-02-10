@@ -26,7 +26,7 @@ export const translations = {
             "¿En que proyectos ha trabajado Jaume?",
             "¿Puedes facilitarme el enlace al CV de Jaume?",
             "¿Cuáles son los estudios y experiencia de Jaume?",
-            "¿Cuáles son las habilidades y conocimientos de Jaume?"
+            "¿Cuáles son los conocimientos de Jaume?"
         ],
         placeholder: "Pregunta a mi asistente sobre mí...",
         buttons: {
