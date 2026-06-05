@@ -7,6 +7,20 @@ let isGenerating = false;
 const chatHistory = [];
 const userData = { message: "", file: {} };
 
+const RATE_LIMIT = { max: 10, windowMs: 60 * 60 * 1000, key: "rl_ts" };
+
+const checkRateLimit = () => {
+    const now = Date.now();
+    const stored = JSON.parse(localStorage.getItem(RATE_LIMIT.key) || "[]");
+    const recent = stored.filter((t) => now - t < RATE_LIMIT.windowMs);
+    if (recent.length >= RATE_LIMIT.max) {
+        const resetIn = Math.ceil((RATE_LIMIT.windowMs - (now - Math.min(...recent))) / 60000);
+        throw new Error(`Rate limit reached (${RATE_LIMIT.max} messages/hour). Try again in ${resetIn} min.`);
+    }
+    recent.push(now);
+    localStorage.setItem(RATE_LIMIT.key, JSON.stringify(recent));
+};
+
 // Helper: create message elements dynamically
 const createMsgElement = (content, ...classes) => {
     const div = document.createElement("div");
@@ -88,6 +102,8 @@ const generateResponse = async (botMsgDiv) => {
     ];
 
     try {
+        checkRateLimit();
+
         const response = await fetch(
             "https://api.openai.com/v1/chat/completions",
             {
