@@ -170,6 +170,20 @@ body.chats-active :where(.header-title, .header-subtitle) {
   color: var(--subheading-color);
 }
 
+/* Inline link in bot messages */
+.chat-link {
+  color: #1d7efd;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(29, 126, 253, 0.35);
+  transition: color 0.2s ease, border-color 0.2s ease;
+  word-break: break-all;
+}
+
+.chat-link:hover {
+  color: #0264e3;
+  border-bottom-color: #0264e3;
+}
+
 /* Suggestions list stylings */
 .container .suggestions {
   display: flex;
@@ -302,6 +316,40 @@ body.chats-active .container :where(.app-header, .suggestions) {
   color: var(--placeholder-color);
   line-height: 1.4;
 }
+
+
+/* Certification card header */
+.cert-card-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.cert-card-header--logo {
+  background: #fff;
+  border-bottom: 1px solid var(--secondary-color);
+}
+
+.cert-provider-logo {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+}
+
+.cert-provider {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: white;
+  opacity: 0.95;
+}
+
+.provider-ztm     { background: #6C47FF; }
+.provider-efset   { background: #1DA462; }
+.provider-default { background: var(--subheading-color); }
 
 /* Suggestions Conversation List stylings */
 .container .suggestions-conversation {

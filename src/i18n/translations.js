@@ -8,7 +8,7 @@ export const translations = {
             "What projects have Jaume worked on?",
             "Could you please provide me with Jaume's CV link?",
             "What are Jaume's studies and experience?",
-            "What are Jaume's skills and knowledge?"
+            "What certifications does Jaume have?"
         ],
         placeholder: "Ask my assistant about me...",
         buttons: {
@@ -26,7 +26,7 @@ export const translations = {
             "¿En que proyectos ha trabajado Jaume?",
             "¿Puedes facilitarme el enlace al CV de Jaume?",
             "¿Cuáles son los estudios y experiencia de Jaume?",
-            "¿Cuáles son los conocimientos de Jaume?"
+            "¿Qué certificaciones tiene Jaume?"
         ],
         placeholder: "Pregunta a mi asistente sobre mí...",
         buttons: {

@@ -20,6 +20,32 @@ const scrollToBottom = () => {
     container?.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
 };
 
+// Convert URLs and Markdown links in plain text to styled anchor tags
+const processLinks = (text) => {
+    const combinedRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)|https?:\/\/[^\s<>"{}|\\^`\[\]()]+/g;
+    const escapeHtml = (str) => {
+        const d = document.createElement("div");
+        d.textContent = str;
+        return d.innerHTML;
+    };
+    const parts = [];
+    let lastIndex = 0;
+    let match;
+    while ((match = combinedRegex.exec(text)) !== null) {
+        if (match.index > lastIndex) parts.push(escapeHtml(text.slice(lastIndex, match.index)));
+        if (match[2]) {
+            // Markdown link: [label](url)
+            parts.push(`<a href="${match[2]}" target="_blank" rel="noopener noreferrer" class="chat-link">${escapeHtml(match[1])}</a>`);
+        } else {
+            // Raw URL
+            parts.push(`<a href="${match[0]}" target="_blank" rel="noopener noreferrer" class="chat-link">${escapeHtml(match[0])}</a>`);
+        }
+        lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) parts.push(escapeHtml(text.slice(lastIndex)));
+    return parts.join("");
+};
+
 // Typing effect for bot messages
 const typingEffect = (text, textElement, botMsgDiv) => {
     textElement.textContent = "";
@@ -43,6 +69,7 @@ const typingEffect = (text, textElement, botMsgDiv) => {
             botMsgDiv.classList.remove("loading");
             document.body.classList.remove("bot-responding");
             isGenerating = false;
+            textElement.innerHTML = processLinks(text);
         }
     }, 40);
 };

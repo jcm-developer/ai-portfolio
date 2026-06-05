@@ -21,10 +21,10 @@
         </li>
         <li class="suggestions-item" data-suggestion="3">
             <p class="text" data-i18n="suggestions.3">
-                What are Jaume's skills and knowledge?
+                What certifications does Jaume have?
             </p>
             <span class="material-symbols-outlined">
-                network_intelligence
+                workspace_premium
             </span>
         </li>
     </ul>
@@ -51,7 +51,7 @@
         </li>
         <li class="suggestions-conversation-item" data-suggestion="3">
             <p class="text" data-i18n="suggestions.3">
-                What are Jaume's skills and knowledge?
+                What certifications does Jaume have?
             </p>
         </li>
     </ul>
@@ -95,6 +95,7 @@
     } from "../scripts/i18n.js";
     import { projects } from "../data/projects.js";
     import { cvLinks } from "../data/cvLinks.js";
+    import { certifications } from "../data/certifications.js";
 
     let container, chatsContainer, promptForm, promptInput;
     let typingInterval, controller;
@@ -137,6 +138,45 @@
                 </div>
             </a>`,
             )
+            .join("");
+        return `<div class="project-cards">${cardsHTML}</div>`;
+    };
+
+    // Build certifications cards HTML
+    const buildCertificationsCardsHTML = () => {
+        const lang = getPreferredLanguage();
+        const base = import.meta.env.BASE_URL;
+        const providerLogo = {
+            "Google": `${base}img/providers/google.png`,
+            "Anthropic": `${base}img/providers/anthropic.png`
+        };
+        const providerClass = {
+            "Zero To Mastery": "provider-ztm",
+            "EF SET": "provider-efset"
+        };
+        const cardsHTML = certifications
+            .map((c, i) => {
+                const tag = c.url ? "a" : "div";
+                const linkAttrs = c.url
+                    ? `href="${c.url}" target="_blank" rel="noopener noreferrer"`
+                    : "";
+                const logo = providerLogo[c.provider];
+                const header = logo
+                    ? `<div class="cert-card-header cert-card-header--logo">
+                            <img src="${logo}" alt="${c.provider}" class="cert-provider-logo" />
+                        </div>`
+                    : `<div class="cert-card-header ${providerClass[c.provider] || "provider-default"}">
+                            <span class="cert-provider">${c.provider}</span>
+                        </div>`;
+                return `
+            <${tag} ${linkAttrs} class="project-card cert-card" data-index="${i}">
+                ${header}
+                <div class="project-card-body">
+                    <span class="project-card-name">${c.name[lang] || c.name.en}</span>
+                    <span class="project-card-desc">${c.date}</span>
+                </div>
+            </${tag}>`;
+            })
             .join("");
         return `<div class="project-cards">${cardsHTML}</div>`;
     };
@@ -303,6 +343,7 @@
                 );
                 cardsDiv.innerHTML = buildProjectCardsHTML();
                 chatsContainer.appendChild(cardsDiv);
+
                 scrollToBottom();
 
                 // Static response instead of API call
@@ -334,6 +375,7 @@
                 );
                 cardsDiv.innerHTML = buildCvCardsHTML();
                 chatsContainer.appendChild(cardsDiv);
+
                 scrollToBottom();
 
                 // Static response instead of API call
@@ -342,6 +384,36 @@
                     lang === "es"
                         ? "Aquí tienes mis CV's. ¿Necesitas algo más o quieres saber algo sobre mí?"
                         : "Here are my CVs. Do you need anything else or want to know something about me?";
+                const botMsgHTML = `
+                    <img src="${import.meta.env.BASE_URL}img/avatar.png" alt="bot" class="avatar">
+                    <p class="message-text">${staticMsg}</p>
+                `;
+                const botMsgDiv = createMsgElement(botMsgHTML, "bot-message");
+                chatsContainer.appendChild(botMsgDiv);
+                scrollToBottom();
+                document.body.classList.remove("bot-responding");
+                pendingSuggestionIndex = null;
+                return;
+            }
+
+            // Inject certification cards if suggestion 3 was clicked — skip API call
+            if (pendingSuggestionIndex === 3) {
+                const cardsDiv = document.createElement("div");
+                cardsDiv.classList.add(
+                    "message",
+                    "bot-message",
+                    "project-cards-message",
+                );
+                cardsDiv.innerHTML = buildCertificationsCardsHTML();
+                chatsContainer.appendChild(cardsDiv);
+
+                scrollToBottom();
+
+                const lang = getPreferredLanguage();
+                const staticMsg =
+                    lang === "es"
+                        ? "Aquí tienes mis certificaciones. Haz clic en cualquiera para verificarla. ¿Quieres saber algo más?"
+                        : "Here are my certifications. Click any to verify it. Want to know anything else?";
                 const botMsgHTML = `
                     <img src="${import.meta.env.BASE_URL}img/avatar.png" alt="bot" class="avatar">
                     <p class="message-text">${staticMsg}</p>
@@ -457,5 +529,13 @@
 
         // Submit handler
         promptForm?.addEventListener("submit", handleFormSubmit);
+
+        // Convert vertical wheel to horizontal scroll on card rows
+        document.addEventListener("wheel", (e) => {
+            const cards = e.target.closest(".project-cards");
+            if (!cards) return;
+            e.preventDefault();
+            cards.scrollBy({ left: e.deltaY + e.deltaX, behavior: "smooth" });
+        }, { passive: false });
     });
 </script>
